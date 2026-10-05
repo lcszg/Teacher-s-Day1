@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    ============================================================
+    TEACHER'S DAY CARD
+    ------------------------------------------------------------
+    A simple two-scene interactive card:
+      Scene 1: Envelope (click to open)
+      Scene 2: Letter (fades in)
+
+    Written to be READ and UNDERSTOOD, not just to work.
+    Every section is commented so you can learn from it.
+    ============================================================
+  -->
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Happy Teacher's Day</title>
+
+  <style>
+    /* ==========================================================
+       1. BASICS
+       ========================================================== */
+
+    /* Remove default spacing that browsers add to every page. */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* The page fills the whole screen and is centered. */
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8d5cf;
+      font-family: Georgia, serif;
+      color: #563f3a;
+      overflow: hidden;   /* Hide the letter scene until we need it */
+    }
+
+    /* ==========================================================
+       2. SCENE LAYOUT
+       ----------------------------------------------------------
+       Both scenes are stacked on top of each other using
+       absolute positioning. Only one is visible at a time.
+       ========================================================== */
+
+    .scene {
+      position: absolute;
+      inset: 0;                        /* top/right/bottom/left = 0 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* The envelope scene sits on top (z-index 2). */
+    .envelope-scene {
+      z-index: 2;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    /* The letter scene sits below (z-index 1) and starts hidden. */
+    .letter-scene {
+      z-index: 1;
+      opacity: 0;                       /* invisible */
+      transform: translateY(30px);      /* slightly lower */
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      pointer-events: none;             /* can't click it yet */
+    }
+
+    /* When the app has the class "is-open", swap the scenes. */
+    .app.is-open .envelope-scene {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+
+    .app.is-open .letter-scene {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* ==========================================================
+       3. ENVELOPE
+       ----------------------------------------------------------
+       The envelope is one button containing four stacked layers:
+         - .env-body   : the back of the envelope
+         - .env-flap   : the triangular top flap that opens
+         - .env-letter : the paper that peeks out
+         - .env-seal   : the wax seal in the middle
+       ========================================================== */
+
+    .envelope {
+      position: relative;
+      width: 400px;
+      height: 260px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      perspective: 1000px;              /* Needed for 3D flap rotation */
+    }
+
+    /* Give the envelope a soft floating motion. */
+    .envelope {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    /* --- The back of the envelope --- */
+    .env-body {
+      position: absolute;
+      inset: 0;
+      background: #e88e86;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(120, 60, 55, 0.3);
+    }
+
+    /* --- The paper peeking out --- */
+    .env-letter {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      width: 80%;
+      height: 45%;
+      background: #fffaf0;
+      border-radius: 4px 4px 0 0;
+      transition: transform 0.8s ease 0.2s;   /* 0.2s delay */
+    }
+
+    /* When open, the paper slides up and out. */
+    .app.is-open .env-letter {
+      transform: translateY(-100%);
+    }
+
+    /* --- The front "V" panel (covers the bottom half) --- */
+    .env-front {
+      position: absolute;
+      inset: 0;
+      background: #f0a398;
+      border-radius: 12px;
+      /* Clip-path draws the V shape (an upside-down triangle). */
+      clip-path: polygon(0 0, 50% 45%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    /* --- The top triangular flap --- */
+    .env-flap {
+      position: absolute;
+      inset: 0;
+      background: #fbd0c6;
+      border-radius: 12px;
+      clip-path: polygon(0 0, 100% 0, 50% 50%);
+      transform-origin: top center;      /* Rotate from the top edge */
+      transition: transform 0.8s ease;
+    }
+
+    /* When open, the flap folds backward. */
+    .app.is-open .env-flap {
+      transform: rotateX(180deg);
+    }
+
+    /* --- The wax seal --- */
+    .env-seal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background: #a94042;
+      color: #fff4eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: opacity 0.3s ease;
+    }
+
+    /* When open, the seal disappears. */
+    .app.is-open .env-seal {
+      opacity: 0;
+    }
+
+    /* --- The "Tap to open" text --- */
+    .hint {
+      position: absolute;
+      bottom: -60px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9e3f3c;
+    }
+
+    /* ==========================================================
+       4. LETTER
+       ========================================================== */
+
+    .letter {
+      background: #fff8e7;
+      width: 90%;
+      max-width: 600px;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(120, 60, 55, 0.3);
+      transform: rotate(-1deg);          /* Slight tilt for realism */
+    }
+
+    .letter h1 {
+      color: #9e3f3c;
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .letter p {
+      font-size: 17px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .letter .kicker {
+      color: #c75b55;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .letter .teacher-name {
+      color: #9e3f3c;
+      font-weight: bold;
+    }
+
+    .letter .signature {
+      margin-top: 30px;
+      font-style: italic;
+      color: #765d55;
+    }
+
+    .letter .sender {
+      display: block;
+      font-style: normal;
+      font-weight: bold;
+      font-size: 20px;
+      color: #9e3f3c;
+      margin-top: 6px;
+    }
+
+    /* ==========================================================
+       5. SMALL SCREENS (phones)
+       ========================================================== */
+
+    @media (max-width: 500px) {
+      .envelope {
+        width: 300px;
+        height: 200px;
+      }
+
+      .letter {
+        padding: 24px;
+      }
+
+      .letter h1 {
+        font-size: 24px;
+      }
+
+      .letter p {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- The whole app. Adding class "is-open" swaps the scenes. -->
+  <main class="app" id="app">
+
+    <!-- ============ SCENE 1: ENVELOPE ============ -->
+    <section class="scene envelope-scene">
+      <button class="envelope" id="envelopeButton" aria-label="Open the letter">
+
+        <!-- The layers stack from back to front. -->
+        <div class="env-body"></div>
+        <div class="env-letter"></div>
+        <div class="env-front"></div>
+        <div class="env-flap"></div>
+        <div class="env-seal">♥</div>
+
+      </button>
+
+      <p class="hint">Tap to open</p>
+    </section>
+
+    <!-- ============ SCENE 2: LETTER ============ -->
+    <section class="scene letter-scene">
+      <article class="letter">
+
+        <p class="kicker">A note of gratitude</p>
+
+        <h1>Happy Teacher's Day!</h1>
+
+        <p>
+          Dear <span class="teacher-name" id="teacherName">Teacher</span>,
+        </p>
+
+        <p id="messageBody">
+          Thank you for your patience and guidance.
+        </p>
+
+        <p class="signature">
+          With warm wishes,
+          <span class="sender" id="senderName">[BSIT 1-C]</span>
+        </p>
+
+      </article>
+    </section>
+
+  </main>
+
+  <script>
+    /*
+      ==========================================================
+      THE JAVASCRIPT
+      ----------------------------------------------------------
+      Three simple jobs:
+        1. Fill in the letter text (so you can edit it easily)
+        2. Listen for a click on the envelope
+        3. Add the "is-open" class to trigger the CSS animation
+      ==========================================================
+    */
+
+    // ---- 1. EDIT YOUR MESSAGE HERE ----
+    // Change these strings to personalize the card.
+    const config = {
+      teacherName: "Teacher",
+      senderName:  "[BSIT 1-C]",
+      message:     "Magandang Araw po! Thank you for all the guidance and lessons you have taught us. Happy Teacher's Day po! ❤️"
+    };
+
+    // ---- 2. FIND THE ELEMENTS ON THE PAGE ----
+    // These variables hold references to the HTML elements we need.
+    const app            = document.getElementById("app");
+    const envelopeButton = document.getElementById("envelopeButton");
+    const teacherName    = document.getElementById("teacherName");
+    const senderName     = document.getElementById("senderName");
+    const messageBody    = document.getElementById("messageBody");
+
+    // ---- 3. INSERT THE MESSAGE INTO THE LETTER ----
+    // This runs once, immediately, to fill in the text.
+    teacherName.textContent = config.teacherName;
+    senderName.textContent  = config.senderName;
+    messageBody.textContent = config.message;
+
+    // ---- 4. HANDLE THE CLICK ----
+    // A flag to prevent double-clicking during the animation.
+    let isOpening = false;
+
+    function openLetter() {
+      // If the animation is already running, ignore extra clicks.
+      if (isOpening) return;
+      isOpening = true;
+
+      // Add the "is-open" class. This is what triggers all the
+      // CSS transitions we wrote above.
+      app.classList.add("is-open");
+
+      // Disable the button so it can't be clicked again.
+      envelopeButton.disabled = true;
+    }
+
+    // Attach the click handler to the envelope button.
+    envelopeButton.addEventListener("click", openLetter);
+
+    // Also allow pressing Enter or Space for keyboard users.
+    envelopeButton.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openLetter();
+      }
+    });
+  </script>
+
+</body>
+</html>
