@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8d5cf">
+  <title>Happy Teacher's Day</title>
+  <style>
+    /* =========================
+       RESET & DESIGN TOKENS
+    ========================== */
+    :root {
+      --ink: #563f3a;
+      --soft-ink: #765d55;
+      --coral: #c75b55;
+      --coral-deep: #9e3f3c;
+      --blush: #f8d5cf;
+      --safe-top: max(env(safe-area-inset-top), clamp(1rem, 3vw, 2.5rem));
+      --safe-right: max(env(safe-area-inset-right), clamp(1rem, 4vw, 4rem));
+      --safe-bottom: max(env(safe-area-inset-bottom), clamp(1rem, 3vw, 2.5rem));
+      --safe-left: max(env(safe-area-inset-left), clamp(1rem, 4vw, 4rem));
+      --radius: clamp(.85rem, 2vw, 1.5rem);
+
+      /* --- motion system: snappy but silky --- */
+      --ease-silk:  cubic-bezier(.22, 1, .36, 1);
+      --ease-glide: cubic-bezier(.25, .8, .3, 1);
+      --ease-flap:  cubic-bezier(.34, .8, .3, 1);
+      --ease-pop:   cubic-bezier(.16, 1.1, .3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--blush);
+      overflow-x: hidden;
+    }
+
+    body {
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button { font: inherit; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* =========================
+       LAYOUT & SCENES
+    ========================== */
+    .greeting-app {
+      position: relative;
+      display: grid;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      isolation: isolate;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,.54) 0 2px, transparent 3px),
+        radial-gradient(circle at 76% 16%, rgba(255,255,255,.5) 0 2px, transparent 3px),
+        radial-gradient(circle at 80% 74%, rgba(255,255,255,.35) 0 3px, transparent 4px),
+        linear-gradient(135deg, #f9d9d0 0%, #f7cfc5 42%, #f9e1cf 100%);
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template: 1fr / 1fr;      /* FIX: gives percentage heights a definite reference */
+      place-items: center;
+      padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+      will-change: opacity, transform;
+      backface-visibility: hidden;
+    }
+
+    /* --- Scene 1: envelope --- */
+    .scene--envelope {
+      z-index: 2;
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+      transition:
+        opacity 620ms var(--ease-glide),
+        transform 700ms var(--ease-silk);
+    }
+
+    /* --- Scene 2: letter --- */
+    .scene--letter {
+      z-index: 3;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate3d(0, clamp(1.25rem, 3.5vw, 2.25rem), 0) scale(.965);
+      transition:
+        opacity 700ms var(--ease-glide),
+        transform 820ms var(--ease-silk);
+    }
+
+    .greeting-app.is-open .scene--envelope {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate3d(0, clamp(-1rem, -2vw, -.5rem), 0) scale(1.035);
+      transition-delay: 600ms;
+    }
+
+    .greeting-app.is-open .scene--letter {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate3d(0, 0, 0) scale(1);
+      transition-delay: 750ms;
+    }
+
+    /* =========================
+       ENVELOPE
+    ========================== */
+    .envelope-stage {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      width: min(92vw, 42rem);
+      animation: envelope-bob 3.6s ease-in-out infinite;
+      /* FIX: removed transform transition — the bob animation owns transform */
+    }
+
+    /* FIX: removed the .is-open transform rule (it was being overridden by the bob animation anyway) */
+
+    .envelope-button {
+      position: relative;
+      display: block;
+      width: clamp(15.5rem, 52vw, 27rem);
+      aspect-ratio: 1.5 / 1;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius);
+      background: transparent;
+      cursor: pointer;
+      perspective: 1400px;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: transform 420ms var(--ease-silk);
+    }
+
+    .envelope-button:focus-visible {
+      outline: clamp(3px, .35vw, 5px) solid #4f3936;
+      outline-offset: clamp(.5rem, 1.2vw, .9rem);
+    }
+
+    @media (hover: hover) {
+      .envelope-button:hover { transform: translateY(-4px) scale(1.012); }
+      .envelope-button:hover .envelope-shadow { transform: scaleX(1.06); }
+    }
+
+    .envelope-shadow {
+      position: absolute;
+      z-index: 0;
+      left: 11%;
+      right: 11%;
+      bottom: clamp(-1.9rem, -4vw, -1rem);
+      height: clamp(.7rem, 2.4vw, 1.4rem);
+      border-radius: 50%;
+      background: rgba(114, 66, 62, .3);
+      opacity: .32;                                /* FIX: base opacity moved out of keyframes */
+      filter: blur(clamp(.4rem, 1.2vw, .9rem));
+      animation: shadow-pulse 3.6s ease-in-out infinite;
+      transition: opacity 550ms var(--ease-glide);
+    }
+
+    .greeting-app.is-open .envelope-shadow {
+      opacity: 0;                                  /* FIX: only opacity changes now */
+    }
+
+    .envelope-back {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(150deg, #e79c92 0%, #d4786f 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.4),
+        0 clamp(.7rem, 2vw, 1.6rem) clamp(1.4rem, 5vw, 3rem) rgba(126, 66, 62, .24);
+    }
+
+    .envelope-letter-peek {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 7%;
+      width: 86%;
+      height: 50%;
+      border-radius: clamp(.25rem, .9vw, .5rem) clamp(.25rem, .9vw, .5rem) 0 0;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0 clamp(1rem, 3vw, 1.5rem),
+          rgba(167, 111, 91, .16) calc(clamp(1rem, 3vw, 1.5rem) + 1px)
+        ),
+        #fffaf0;
+      box-shadow: 0 -.12rem .5rem rgba(107, 66, 57, .16);
+      transform: translate3d(0, 0, 0);
+      transition: transform 780ms var(--ease-silk) 180ms;
+      will-change: transform;
+    }
+
+    .envelope-front {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(200deg, rgba(255,255,255,.22) 0%, transparent 48%),
+        linear-gradient(165deg, #f9c3b8 0%, #f0a398 58%, #ea978c 100%);
+      clip-path: polygon(0 0, 50% 48%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .envelope-flap {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, #fbd0c6 0%, #f3b0a5 70%, #eea79b 100%);
+      clip-path: polygon(0 0, 100% 0, 50% 52%);
+      transform-origin: top center;
+      transform: rotateX(0deg);
+      transition:
+        transform 680ms var(--ease-flap) 40ms,
+        z-index 0s linear;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    .wax-seal {
+      position: absolute;
+      z-index: 5;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: clamp(2.5rem, 8.5vw, 4.1rem);
+      aspect-ratio: 1;
+      place-items: center;
+      border: clamp(2px, .4vw, 3px) solid rgba(255, 228, 214, .5);
+      border-radius: 50%;
+      color: #fff4eb;
+      background:
+        radial-gradient(circle at 34% 27%, rgba(255,255,255,.35) 0 8%, transparent 9%),
+        linear-gradient(145deg, #cc645e, #a94042);
+      box-shadow: 0 .22rem .5rem rgba(111, 48, 48, .3);
+      transform: translate(-50%, -50%) scale(1);
+      font-size: clamp(1.05rem, 3.6vw, 1.75rem);
+      line-height: 1;
+      transition: opacity 260ms var(--ease-glide), transform 380ms var(--ease-pop);
+      pointer-events: none;
+    }
+
+    .wax-seal span { transform: translateY(.04em); }
+
+    /* ---- OPEN STATE ---- */
+    .greeting-app.is-open .envelope-flap {
+      transform: rotateX(-170deg);
+      z-index: 1;
+      transition:
+        transform 680ms var(--ease-flap) 40ms,
+        z-index 0s linear 380ms;
+    }
+
+    .greeting-app.is-open .envelope-letter-peek {
+      transform: translate3d(0, -95%, 0);
+    }
+
+    .greeting-app.is-open .wax-seal {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.55) rotate(-18deg);
+    }
+
+    .tap-hint {
+      margin: clamp(2.6rem, 7vw, 4.5rem) 0 0;
+      color: var(--coral-deep);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: clamp(.88rem, 2.3vw, 1.15rem);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      animation: hint-pulse 2.2s ease-in-out infinite;
+      transition: opacity 300ms var(--ease-glide);
+    }
+
+    /* FIX: only fade opacity — the pulse animation owns transform */
+    .greeting-app.is-open .tap-hint {
+      opacity: 0;
+    }
+
+    /* =========================
+       LETTER
+    ========================== */
+    .letter-wrap {
+      position: relative;
+      display: flex;                                /* FIX: flex so the card can size itself */
+      flex-direction: column;
+      min-height: 0;
+      width: min(100%, 48rem);
+      max-height: 100%;                             /* FIX: % of the grid area, not 100vh */
+      padding: clamp(.6rem, 2vw, 1.3rem);
+    }
+
+    .letter-card {
+      position: relative;
+      flex: 1 1 auto;                               /* FIX: fills the wrap */
+      min-height: 0;                                /* FIX: allows shrinking for scroll */
+      width: 100%;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: clamp(1.55rem, 5vw, 4.25rem);
+      border: 1px solid rgba(145, 98, 67, .16);
+      border-radius: clamp(1rem, 2.5vw, 1.9rem);
+      background:
+        linear-gradient(90deg, transparent 0, transparent 7.5%, rgba(199,91,85,.11) 7.6%, transparent 7.9%),
+        repeating-linear-gradient(to bottom, transparent 0, transparent clamp(1.75rem, 4vw, 2.35rem), rgba(179,126,97,.10) calc(clamp(1.75rem, 4vw, 2.35rem) + 1px)),
+        linear-gradient(140deg, #fffdf3, #fff5dc);
+      box-shadow:
+        0 clamp(1rem, 3vw, 2rem) clamp(2rem, 8vw, 5rem) rgba(113, 71, 56, .26),
+        inset 0 0 3rem rgba(222, 190, 133, .12);
+      transform: rotate(-1deg);
+    }
+
+    .letter-card:focus { outline: none; }
+
+    .letter-card::before {
+      position: absolute;
+      top: clamp(1rem, 4vw, 2.2rem);
+      right: clamp(1rem, 4vw, 2.4rem);
+      width: clamp(2.2rem, 8vw, 4rem);
+      height: clamp(2.2rem, 8vw, 4rem);
+      content: "✦";
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: rgba(199,91,85,.35);
+      background: rgba(244, 197, 150, .18);
+      font-size: clamp(1.35rem, 4vw, 2.1rem);
+      transform: rotate(15deg);
+    }
+
+    .letter-kicker {
+      margin: 0 0 clamp(.65rem, 2vw, 1.1rem);
+      color: var(--coral);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: clamp(.75rem, 2vw, 1rem);
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .letter-title {
+      max-width: 85%;
+      margin: 0 0 clamp(1.35rem, 4vw, 2.4rem);
+      color: var(--coral-deep);
+      font-size: clamp(2rem, 7vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.03;
+      letter-spacing: -.045em;
+    }
+
+    .letter-body {
+      max-width: 39rem;
+      color: var(--ink);
+      font-size: clamp(1rem, 2.45vw, 1.35rem);
+      line-height: 1.7;
+    }
+
+    .letter-body p { margin: 0 0 clamp(1rem, 2.8vw, 1.75rem); }
+
+    .teacher-name { color: var(--coral-deep); font-weight: 700; }
+
+    .message-copy { white-space: pre-line; }
+
+    .letter-signoff {
+      margin-top: clamp(1.5rem, 4vw, 2.8rem) !important;
+      margin-bottom: 0 !important;
+      color: var(--soft-ink);
+    }
+
+    .sender-name {
+      display: block;
+      margin-top: .35rem;
+      color: var(--coral-deep);
+      font-size: clamp(1.25rem, 3.5vw, 1.85rem);
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    /* =========================
+       DECORATIVE SPARKLES
+    ========================== */
+    .sparkle,
+    .floating-heart {
+      position: absolute;
+      z-index: -1;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .sparkle {
+      color: rgba(255,255,255,.82);
+      font-size: clamp(1.1rem, 4vw, 2.5rem);
+      animation: sparkle 3.8s ease-in-out infinite;
+    }
+
+    .sparkle--one   { top: 13%; left: 10%; animation-delay: -.5s; }
+    .sparkle--two   { top: 19%; right: 12%; font-size: clamp(.8rem, 3vw, 1.8rem); animation-delay: -1.9s; }
+    .sparkle--three { bottom: 16%; left: 16%; font-size: clamp(.75rem, 2.4vw, 1.5rem); animation-delay: -2.8s; }
+
+    .floating-heart {
+      color: rgba(199,91,85,.22);
+      font-size: clamp(1.1rem, 4vw, 2.4rem);
+      animation: heart-drift 5s ease-in-out infinite;
+    }
+
+    .heart--one { top: 10%; right: 22%; animation-delay: -1.5s; }
+    .heart--two { right: 9%; bottom: 13%; font-size: clamp(.85rem, 2.8vw, 1.6rem); animation-delay: -3s; }
+
+    /* =========================
+       ANIMATION
+    ========================== */
+    @keyframes envelope-bob {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      50%      { transform: translate3d(0, clamp(-.45rem, -1.4vw, -.8rem), 0); }
+    }
+
+    /* FIX: transform-only so it doesn't fight the fade transition */
+    @keyframes shadow-pulse {
+      0%, 100% { transform: scaleX(.9); }
+      50%      { transform: scaleX(1.08); }
+    }
+
+    /* FIX: transform-only so it doesn't fight the fade transition */
+    @keyframes hint-pulse {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      50%      { transform: translate3d(0, -.18rem, 0); }
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: .38; transform: scale(.8) rotate(0deg); }
+      50%      { opacity: 1;   transform: scale(1.15) rotate(22deg); }
+    }
+
+    @keyframes heart-drift {
+      0%, 100% { opacity: .18; transform: translate3d(0, 0, 0) rotate(-8deg); }
+      50%      { opacity: .48; transform: translate3d(0, clamp(-.55rem, -1vw, -.25rem), 0) rotate(8deg); }
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================== */
+    @media (max-height: 34rem) and (orientation: landscape) {
+      .envelope-button { width: clamp(12rem, 34vw, 18rem); }
+      .tap-hint { margin-top: 1.65rem; }
+
+      .letter-card { padding-block: clamp(1.1rem, 3vw, 2rem); }
+      .letter-title { margin-bottom: 1rem; }
+      .letter-body { line-height: 1.48; }
+      .letter-body p { margin-bottom: .75rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+
+      .scene,
+      .envelope-flap,
+      .envelope-letter-peek,
+      .wax-seal,
+      .envelope-button,
+      .envelope-shadow,
+      .tap-hint {
+        transition-duration: .01ms !important;
+        transition-delay: 0ms !important;
+      }
+
+      .greeting-app.is-open .scene--envelope,
+      .greeting-app.is-open .scene--letter {
+        transition-delay: 0ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="greeting-app" id="greetingApp" aria-labelledby="pageTitle">
+    <h1 class="sr-only" id="pageTitle">Teacher's Day greeting</h1>
+    <div class="sr-only" id="sceneAnnouncement" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ========== SCENE 1 : ENVELOPE ========== -->
+    <section class="scene scene--envelope" id="envelopeScene" aria-label="Envelope greeting">
+      <span class="sparkle sparkle--one" aria-hidden="true">✦</span>
+      <span class="sparkle sparkle--two" aria-hidden="true">✦</span>
+      <span class="sparkle sparkle--three" aria-hidden="true">✦</span>
+
+      <div class="envelope-stage">
+        <button
+          class="envelope-button"
+          id="envelopeButton"
+          type="button"
+          aria-label="Open your Teacher's Day letter"
+          aria-describedby="tapHint">
+
+          <span class="envelope-shadow" aria-hidden="true"></span>
+          <span class="envelope-back" aria-hidden="true"></span>
+          <span class="envelope-letter-peek" aria-hidden="true"></span>
+          <span class="envelope-front" aria-hidden="true"></span>
+          <span class="envelope-flap" aria-hidden="true"></span>
+          <span class="wax-seal" aria-hidden="true"><span>♥</span></span>
+        </button>
+
+        <p class="tap-hint" id="tapHint">Tap to open</p>
+      </div>
+    </section>
+
+    <!-- ========== SCENE 2 : LETTER ========== -->
+    <section class="scene scene--letter" id="letterScene" aria-label="Teacher's Day letter" aria-hidden="true">
+      <span class="floating-heart heart--one" aria-hidden="true">♥</span>
+      <span class="floating-heart heart--two" aria-hidden="true">♥</span>
+
+      <div class="letter-wrap">
+        <article class="letter-card" id="letterCard" tabindex="-1">
+          <p class="letter-kicker">A note of gratitude</p>
+          <h2 class="letter-title">Happy Teacher's Day!</h2>
+
+          <div class="letter-body">
+            <p>Dear <span class="teacher-name" id="teacherName">[TEACHER NAME]</span>,</p>
+            <p class="message-copy" id="messageBody">[MESSAGE BODY]</p>
+            <p class="letter-signoff">
+              With gratitude and warm wishes,
+              <span class="sender-name" id="senderName">[BSIT 1-C]</span>
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /* =========================
+       CONFIG — EDIT THESE VALUES
+    ========================== */
+    const GREETING_CONFIG = {
+      teacherName: "INSTRUCTOR",
+      senderName: "[BSIT 1-C]",
+      messageBody:
+        "Magandang Araw po, Ma’am/Sir. Thank you so much for all the guidance and lessons you have taught us. We truly appreciate your patience and dedication in teaching us.\n\n" +
+        "Thank you for inspiring us to learn, grow, and believe in ourselves." +
+        " Wishing you a beautiful Teacher's Day filled with the appreciation you deserve.🫶❤️"
+    };
+
+    (function () {
+      "use strict";
+
+      const app               = document.getElementById("greetingApp");
+      const envelopeScene     = document.getElementById("envelopeScene");
+      const envelopeButton    = document.getElementById("envelopeButton");
+      const letterScene       = document.getElementById("letterScene");
+      const letterCard        = document.getElementById("letterCard");
+      const sceneAnnouncement = document.getElementById("sceneAnnouncement");
+      const teacherNameEl     = document.getElementById("teacherName");
+      const senderNameEl      = document.getElementById("senderName");
+      const messageBodyEl     = document.getElementById("messageBody");
+
+      if (!app || !envelopeScene || !envelopeButton || !letterScene ||
+          !letterCard || !sceneAnnouncement || !teacherNameEl ||
+          !senderNameEl || !messageBodyEl) {
+        return;
+      }
+
+      /* ---- fill in the letter ---- */
+      teacherNameEl.textContent = GREETING_CONFIG.teacherName;
+      senderNameEl.textContent  = GREETING_CONFIG.senderName;
+      messageBodyEl.textContent = GREETING_CONFIG.messageBody;
+
+      const reduceMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const ANNOUNCE_AT = reduceMotion ? 0   : 600;
+      const FOCUS_AT    = reduceMotion ? 20  : 1350;
+
+      let isLocked = false;
+
+      function openLetter() {
+        if (isLocked) return;
+        isLocked = true;
+
+        envelopeButton.disabled = true;
+        envelopeButton.setAttribute("aria-disabled", "true");
+        app.classList.add("is-open");
+        sceneAnnouncement.textContent = "Opening your Teacher's Day letter.";
+
+        window.setTimeout(function () {
+          envelopeScene.setAttribute("aria-hidden", "true");
+          letterScene.setAttribute("aria-hidden", "false");
+          sceneAnnouncement.textContent = "Your Teacher's Day letter is now open.";
+
+          window.setTimeout(function () {
+            letterCard.focus({ preventScroll: true });
+          }, FOCUS_AT - ANNOUNCE_AT);
+        }, ANNOUNCE_AT);
+      }
+
+      envelopeButton.addEventListener("click", openLetter);
+
+      envelopeButton.addEventListener("keydown", function (event) {
+        if (event.key === " " || event.key === "Spacebar" || event.key === "Enter") {
+          event.preventDefault();
+          openLetter();
+        }
+      });
+    }());
+  </script>
+</body>
+</html>
